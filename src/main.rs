@@ -1,60 +1,53 @@
-mod structs;
-mod logger;
 mod db;
+mod endpoints;
+mod logger;
+mod structs;
 
-use structs::backend_types::RequestType;
-use actix_web::{get, http::StatusCode, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use serde::{Serialize, Deserialize};
-use dotenv::dotenv;
-use log::{info, error, warn};
-use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
+use actix_web::{
+    get, http::StatusCode, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use db::setup_db_connection;
+use dotenv::dotenv;
+use env_logger::Logger;
+use endpoints::{
+    check_crdts, index, ping,
+    sign_up, create_note, delete_note,
+    get_all_notes, check_sqlx
+};
+use structs::AppState;
+use log::{error, info, warn};
 use logger::setup_logger;
+use serde::{Deserialize, Serialize};
+use structs::backend_types::RequestType;
 
-#[get("/")]
-async fn index(req: HttpRequest) -> impl Responder {
-    HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body("HELLO API")
-}
-#[get("/ping")]
-async fn ping(req: HttpRequest) -> impl Responder {
-    HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body("PONG")
-}
-
-async fn check_crdts(req_body: web::Json<RequestType>) -> impl Responder {
-    HttpResponse::Ok()
-}
+use actix_web::middleware::Logger as Log;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    let res = tokio::join!(setup_db_connection(), setup_logger());
+    dotenv::dotenv().ok();
 
-    if res.0.is_err() || res.1.is_err() {
-        let err =  match res.0 {
-            Ok(_) => {
-                res.1.unwrap_err()
-            },
-            Err(er) => er,
-        };
-        error!("setting up api-server failed due to: {}", err);
-    }
+    setup_logger().await?;
+    let db_pool = setup_db_connection().await?;
 
     anyhow::Result::from(
-        HttpServer::new(|| {
+        HttpServer::new(move || {
             App::new()
+                .app_data(web::Data::new(db_pool.clone()))
                 .service(index)
-                .service(ping)
-                .service(
+                .service(ping).service(
                     web::scope("/api/v1")
                         .route("/check_credentials", web::post().to(check_crdts))
-                )
+                        .route("/signup", web::post().to(sign_up))
+                        .route("/create_note", web::post().to(create_note))
+                        .route("/delete_note", web::post().to(delete_note))
+                        .route("/get_all_notes", web::post().to(get_all_notes))
+                        .route("/check_sqlx", web::post().to(check_sqlx)),
+            )
+                .wrap(Log::default())
         })
-            .bind(("127.0.0.1", 8081))?
-            .run()
-            .await
+        .bind(("127.0.0.1", 8081))?
+        .run()
+        .await,
     )?;
     Ok(())
 }

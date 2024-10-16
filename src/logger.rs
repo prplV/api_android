@@ -1,9 +1,9 @@
-use std::fs::write;
+use anyhow::{Ok, Result};
 use chrono::Local;
 use env_logger::Builder;
 use log::{info, LevelFilter};
+use std::fs::write;
 use std::io::Write;
-use anyhow::{Result, Ok};
 
 pub async fn setup_logger() -> Result<()> {
     Builder::new()
