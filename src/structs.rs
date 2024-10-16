@@ -9,7 +9,16 @@ use serde::{Serialize, Deserialize};
 //     index: usize,
 // }
 
-#[derive(Deserialize)]
-pub struct RequestType {
-    text: String,
+pub mod backend_types {
+    use serde::{Serialize, Deserialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct RequestType {
+        text: String,
+    }
+}
+
+mod postrges_types {
+    pub struct users;
+    pub struct notes;
 }
