@@ -1,7 +1,8 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use serde::{Deserialize, Serialize};
-use postgres::Client;
+use deadpool_postgres::Pool;
+// use postgres::Client;
 // #[derive(Serialize, Debug)]
 // struct ResponseType {
 //     initial_cmd: String,
@@ -9,7 +10,7 @@ use postgres::Client;
 //     text: String,
 //     index: usize,
 // }
-type PgClient = Arc<Mutex<Client>>;
+type PgClient = Pool;
 pub struct AppState {
     pub db_pool : PgClient,
 }
@@ -31,7 +32,7 @@ pub mod backend_types {
     }
 }
 
-mod postgres_types {
+mod models {
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Debug)]

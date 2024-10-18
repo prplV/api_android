@@ -7,24 +7,20 @@ use actix_web::{
     get, http::StatusCode, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use db::setup_db_connection;
-use dotenv::dotenv;
-use env_logger::Logger;
 use endpoints::{
     check_crdts, index, ping,
     sign_up, create_note, delete_note,
     get_all_notes, check_sqlx
 };
 use structs::AppState;
-use log::{error, info, warn};
 use logger::setup_logger;
 use serde::{Deserialize, Serialize};
-use structs::backend_types::RequestType;
 
 use actix_web::middleware::Logger as Log;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    dotenv::dotenv().ok();
+    dotenv::dotenv()?;
 
     setup_logger().await?;
     let db_pool = setup_db_connection().await?;
@@ -32,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
     anyhow::Result::from(
         HttpServer::new(move || {
             App::new()
-                .app_data(web::Data::new(db_pool.clone()))
+                .app_data(web::Data::new(AppState::new(db_pool.clone())))
                 .service(index)
                 .service(ping).service(
                     web::scope("/api/v1")

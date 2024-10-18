@@ -1,6 +1,9 @@
+use std::fmt::format;
 use crate::structs::backend_types::RequestType;
 use actix_web::http::StatusCode;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
+use log::error;
+use tokio_postgres::GenericClient;
 use crate::structs::AppState;
 
 #[get("/")]
@@ -37,10 +40,24 @@ pub async fn get_all_notes(req_body: web::Json<RequestType>) -> impl Responder {
     HttpResponse::Ok()
 }
 pub async fn check_sqlx(pool: web::Data<AppState>, req_body: HttpRequest) -> impl Responder {
-    // let client = pool.db_pool.clone();
-    if let Ok(row) = pool.db_pool.clone().lock().await.query("select * from users", &[]) {
-        println!("{:?}", row);
-    }
+    // if let Ok(client) =  pool.db_pool.clone().get().await {
+    //     match client.query("select * from users;", &[]).await {
+    //         Ok(vec_rows) => {
+    //             for row in &vec_rows {
+    //                 eprintln!("{:?}", row.get::<&str, &str>("name_user"));
+    //                 eprintln!("{:?}", row.get::<&str, &str>("mail_user"));
+    //             }
+    //             HttpResponse::build(actix_web::http::StatusCode::OK).body(format!("{:?}", vec_rows))
+    //         },
+    //         Err(er) => {
+    //             eprintln!("{}", er);
+    //             HttpResponse::InternalServerError().into()
+    //         },
+    //     }
+    // } else {
+    //     eprintln!("error with getting connection from pool");
+    //     HttpResponse::InternalServerError().into()
+    // }
     HttpResponse::Ok()
 }
 // pub async fn
